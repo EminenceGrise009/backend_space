@@ -1,0 +1,76 @@
+const express = require('express');
+const router = express.Router();
+const multer = require('multer');
+const AWS = require('aws-sdk');
+const ffmpeg = require('fluent-ffmpeg');
+
+// Configure AWS
+AWS.config.update({
+  accessKeyId: 'YOUR_ACCESS_KEY',
+  secretAccessKey: 'YOUR_SECRET_KEY',
+  region: 'us-east-1' // Change to your desired region
+});
+
+const s3 = new AWS.S3();
+
+// Set up multer for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only video files are allowed'));
+    }
+  }
+});
+
+// POST /api/upload
+router.post('/upload', upload.single('video'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No video file provided' });
+  }
+
+  // Perform video compression using ffmpeg
+  const compressedVideoBuffer = await compressVideo(req.file.buffer);
+
+  // Upload the original and compressed videos to S3
+  try {
+    await uploadToS3(originalVideoParams, req.file.buffer);
+    await uploadToS3(compressedVideoParams, compressedVideoBuffer);
+
+    res.json({ message: 'Video uploaded and compressed successfully' });
+  } catch (err) {
+    console.error('S3 upload error:', err);
+    res.status(500).json({ error: 'Failed to upload video files to S3' });
+  }
+});
+
+// ... (other functions and routes)
+
+function compressVideo(videoBuffer) {
+  return new Promise((resolve, reject) => {
+    ffmpeg()
+      .input(videoBuffer)
+      .inputOptions(['-threads 4', '-framerate 30'])
+      .videoCodec('libx264')
+      .audioCodec('aac')
+      .toFormat('mp4')
+      .on('end', () => {
+        console.log('Video compression finished');
+        resolve();
+      })
+      .on('error', (err) => {
+        console.error('Video compression error:', err);
+        reject(err);
+      })
+      .pipe();
+  });
+}
+
+async function uploadToS3(params, fileBuffer) {
+  // ... (same as previous code)
+}
+
+module.exports = router;

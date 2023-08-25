@@ -1,0 +1,42 @@
+sudo yum update -y
+sudo yum install git -y
+
+
+
+git clone your-repo-url
+cd your-project-directory
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+source ~/.bashrc
+nvm install node
+
+
+//install pm2 
+npm install -g pm2
+
+
+pm2 start app.js
+
+
+pm2 save
+
+
+server {
+    listen 80;
+    server_name your-domain.com;  # Your domain or IP
+    location / {
+        proxy_pass http://127.0.0.1:3000;  # Your app's port
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+
+
+
+sudo systemctl restart nginx
+
+
+
+

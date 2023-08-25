@@ -1,0 +1,46 @@
+// ... (previous code)
+
+const AWS = require('aws-sdk');
+const s3 = new AWS.S3({
+  accessKeyId: 'YOUR_ACCESS_KEY',
+  secretAccessKey: 'YOUR_SECRET_KEY',
+  region: 'us-east-1' // Change to your desired region
+});
+
+
+
+router.post('/upload', upload.single('video'), async (req, res) => {
+  // ... (previous code)
+
+  // Upload the original and compressed videos to S3
+  try {
+    await uploadToS3(originalVideoParams, req.file.buffer);
+    await uploadToS3(compressedVideoParams, compressedVideoBuffer);
+
+    res.json({ message: 'Video uploaded and compressed successfully' });
+  } catch (err) {
+    console.error('S3 upload error:', err);
+    res.status(500).json({ error: 'Failed to upload video files to S3' });
+  }
+});
+
+async function uploadToS3(params, fileBuffer) {
+  return new Promise((resolve, reject) => {
+    s3.upload(
+      {
+        ...params,
+        Body: fileBuffer
+      },
+      (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log('File uploaded to S3:', data.Location);
+          resolve();
+        }
+      }
+    );
+  });
+}
+
+

@@ -1,0 +1,68 @@
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Middleware for JSON parsing
+app.use(express.json());
+
+// Sample middleware for logging requests
+app.use((req, res, next) => {
+  console.log(`Received ${req.method} request at ${req.url}`);
+  next();
+});
+
+// Routes
+app.use('/api', require('./routes'));
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+
+
+
+const express = require('express');
+const router = express.Router();
+
+// Sample route
+router.get('/', (req, res) => {
+  res.json({ message: 'Welcome to the API' });
+});
+
+module.exports = router;
+
+
+
+
+const express = require('express');
+const router = express.Router();
+const multer = require('multer');
+
+// Set up multer for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// POST /api/upload
+router.post('/upload', upload.single('video'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No video file provided' });
+  }
+
+  // You can process the uploaded file here
+  // For example, save it to a directory or perform compression
+
+  res.json({ message: 'File uploaded successfully' });
+});
+
+module.exports = router;
+
+
+
+
+
+const express = require('express');
+const router = express.Router();
+
+router.use('/', require('./upload'));
+
+module.exports = router;
